@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>موقع المهندس خالد سلطان (مكاوي) - متابعة إنجاز الفرق</title>
+    <!-- مكتبة XLSX لإنشاء وتصدير ملفات الإكسل -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 750px;
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .header-banner {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ffffff;
+            text-align: center;
+            padding: 18px 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        .header-banner h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 12px;
+            border: 1px solid #cccccc;
+            border-radius: 6px;
+            font-size: 15px;
+            outline: none;
+        }
+        input[type="text"] {
+            flex: 2;
+        }
+        input[type="number"] {
+            flex: 1;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-add {
+            background-color: #27ae60;
+            color: white;
+        }
+        .btn-add:hover {
+            background-color: #219150;
+        }
+        .btn-export {
+            background-color: #2980b9;
+            color: white;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .btn-export:hover {
+            background-color: #1f6391;
+        }
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-delete:hover {
+            background-color: #c0392b;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #e1e1e1;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .empty-msg {
+            text-align: center;
+            color: #888;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- الهيدر العلوي الخاص بالمهندس خالد سلطان -->
+    <div class="header-banner">
+        <h1>موقع خاص للمهندس خالد سلطان ( مكاوي )</h1>
+    </div>
+
+    <h2>متابعة الإنجاز اليومي للفرق</h2>
+
+    <div class="form-group">
+        <input type="text" id="teamName" placeholder="اسم الفرقة" required>
+        <input type="number" id="dailyTask" placeholder="المنجز" min="0" required>
+        <button class="btn-add" onclick="addTeam()">إضافة</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>الفرقة</th>
+                <th>المنجز</th>
+                <th style="width: 80px;">إجراء</th>
+            </tr>
+        </thead>
+        <tbody id="teamTableBody">
+            <tr id="emptyRow">
+                <td colspan="3" class="empty-msg">لم يتم إضافة أي فرق بعد.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button class="btn-export" onclick="exportToExcel()">تصدير إلى Excel 📥</button>
+</div>
+
+<script>
+    let teams = [];
+
+    function addTeam() {
+        const nameInput = document.getElementById('teamName');
+        const taskInput = document.getElementById('dailyTask');
+
+        const name = nameInput.value.trim();
+        const task = taskInput.value.trim();
+
+        if (!name || !task) {
+            alert('يرجى كتابة اسم الفرقة والمنجز!');
+            return;
+        }
+
+        teams.push({ name: name, task: task });
+
+        nameInput.value = '';
+        taskInput.value = '';
+        nameInput.focus();
+
+        renderTable();
+    }
+
+    function removeTeam(index) {
+        teams.splice(index, 1);
+        renderTable();
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('teamTableBody');
+        tbody.innerHTML = '';
+
+        if (teams.length === 0) {
+            tbody.innerHTML = '<tr id="emptyRow"><td colspan="3" class="empty-msg">لم يتم إضافة أي فرق بعد.</td></tr>';
+            return;
+        }
+
+        teams.forEach((team, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${team.name}</strong></td>
+                <td>${team.task}</td>
+                <td><button class="btn-delete" onclick="removeTeam(${index})">حذف</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function exportToExcel() {
+        if (teams.length === 0) {
+            alert('لا توجد بيانات لتصديرها!');
+            return;
+        }
+
+        // 1. إنشاء جدول يحتوي على العمودين المطلوبين فقط
+        const excelData = teams.map(team => ({
+            "الفرقة": team.name,
+            "المنجز": Number(team.task) || team.task
+        }));
+
+        // 2. تحويل البيانات إلى ورقة عمل إكسل
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+        // 3. ضبط عروض الأعمدة لتصبح عريضة وواضحة جداً
+        worksheet['!cols'] = [
+            { wch: 35 }, // عرض عمود الفرقة
+            { wch: 20 }  // عرض عمود المنجز
+        ];
+
+        // 4. ضبط الاتجاه من اليمين لليار داخل الإكسل (RTL)
+        if (!worksheet['!views']) worksheet['!views'] = [];
+        worksheet['!views'].push({ RTL: true });
+
+        // 5. إنشاء وتنزيل كتاب الإكسل
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "تقرير الإنجاز");
+
+        const today = new Date().toISOString().split('T')[0];
+        XLSX.writeFile(workbook, `تقرير_انجاز_الفرق_${today}.xlsx`);
+    }
+</script>
+
+</body>
+</html>
